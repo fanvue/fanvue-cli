@@ -1,0 +1,4 @@
+# Local runs and tests honour the FANVUE_*_URL host overrides. scripts/build.ts sets this per
+# build, false for the public binary.
+[define]
+FANVUE_DEV = "true"

@@ -1,0 +1,29 @@
+{
+  "name": "@fanvue/cli",
+  "version": "0.0.0",
+  "description": "Fanvue from your terminal",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "fanvue": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "sync-spec": "bun run scripts/sync-spec.ts",
+    "gen": "bun run scripts/gen.ts && bun run scripts/docs.ts",
+    "build": "bun run scripts/build.ts",
+    "package": "bun run scripts/package.ts",
+    "check:public": "bun run scripts/check-public.ts",
+    "smoke": "bun run scripts/smoke.ts",
+    "test": "bun test",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.13",
+    "@types/bun": "1.3.14",
+    "typescript": "5.9.3"
+  },
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,49 @@
+name: Sync API spec
+
+on:
+  schedule:
+    - cron: "0 6 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bun run sync-spec
+      - run: bun run gen
+      - run: bun test
+
+      # A command that disappears breaks scripts that call it, so it needs a major release.
+      - name: Check for removed commands
+        id: removed
+        run: |
+          removed=$(git diff --unified=0 docs/commands.txt | grep '^-fanvue' | sed 's/^-//' | cut -c1-70 | sed 's/ *$//' || true)
+          {
+            echo "list<<EOF"
+            echo "$removed"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/sync-api-spec
+          commit-message: "chore: sync the API spec from api.fanvue.com"
+          title: "chore: sync the API spec from api.fanvue.com"
+          labels: ${{ steps.removed.outputs.list != '' && 'spec-sync,breaking' || 'spec-sync' }}
+          body: |
+            Synced `spec/` from https://api.fanvue.com/openapi and regenerated the commands and the
+            docs reference. `docs/commands.txt` in the diff shows which commands changed.
+
+            Removed commands (a major release if any):
+            ```
+            ${{ steps.removed.outputs.list }}
+            ```

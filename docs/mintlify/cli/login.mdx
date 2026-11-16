@@ -1,0 +1,60 @@
+---
+title: "Sign in to the Fanvue CLI"
+sidebarTitle: "Sign in"
+description: "Sign in to the Fanvue CLI in your browser, choose read or write access, sign in over SSH, sign out and keep your session safe."
+keywords: ["cli login", "fanvue login", "sign in", "oauth", "pkce", "write access", "ssh", "logout", "keychain", "consent"]
+---
+
+`fanvue login` signs the CLI in to your Fanvue creator or agency account through your browser. You need the CLI [installed](/cli/overview#install-the-cli) and a browser on the same computer, or an SSH connection you can forward a port over.
+
+## Sign in
+
+Run `fanvue login`. The CLI opens Fanvue in your browser, where you sign in if you aren't already and approve the **Fanvue CLI**.
+
+```bash
+fanvue login
+```
+
+```text
+Opening your browser to sign in to Fanvue. Approve only if you ran `fanvue login` yourself.
+Logged in as @yourhandle with read access. Run `fanvue login --write` to make changes.
+```
+
+Fanvue asks you to approve the CLI every time you sign in, even if you approved it before. Approve it only when you've just run `fanvue login` yourself. Any program can call itself the Fanvue CLI, so an approval screen you didn't expect means something else is asking for access to your account. Choose **Cancel** and check what is running on your computer.
+
+The browser hands the sign-in back to the CLI on your own computer, at `http://127.0.0.1` on port `8787`, `8788` or `8789`. The CLI takes the first free one. If all three are in use, close whatever is using them and sign in again.
+
+## Choose read or write access
+
+`fanvue login` gives the CLI read access, so it can list and read your messages, fans, posts, media and insights. To send messages, publish posts or change settings, sign in with write access.
+
+```bash
+fanvue login --write
+```
+
+The approval screen lists every scope the CLI is asking for. Commands that change data still need `--yes`, or `--confirm <your handle>` for changes fans see, as described in [Confirm changes before they send](/cli/overview#confirm-changes-before-they-send).
+
+## Sign in over SSH
+
+The CLI doesn't open a browser over SSH. It prints the sign-in link instead. Forward the callback port from your own computer when you connect, then open the link in your local browser.
+
+```bash
+ssh -L 8787:127.0.0.1:8787 your-server
+fanvue login
+```
+
+## Where your session is stored
+
+The CLI keeps your session in your system's credential store: Keychain on macOS, the Secret Service on Linux and Credential Manager on Windows. It never prints your access token and never writes it to a file. When a session expires or is revoked, commands exit with code `4` and ask you to sign in again.
+
+Fan accounts can't sign in to the CLI. The CLI checks your account type after you approve and saves nothing for a fan-only account.
+
+## Sign out
+
+`fanvue logout` removes the session from your credential store.
+
+```bash
+fanvue logout
+```
+
+To stop the CLI using your account from every computer, remove the **Fanvue CLI** from the apps connected to your Fanvue account.

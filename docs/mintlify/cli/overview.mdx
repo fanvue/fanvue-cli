@@ -1,0 +1,113 @@
+---
+title: "Fanvue CLI"
+sidebarTitle: "Overview"
+description: "Run the Fanvue API from your terminal: read and send messages, manage posts, the vault and links, and read insights as a creator or agency."
+keywords: ["cli", "command line", "terminal", "fanvue cli", "npm", "scripting", "automation", "exit codes", "--creator"]
+---
+
+The Fanvue CLI runs the Fanvue API from your terminal, one command per documented operation. Use it to script routine work, check data without writing an app, or connect your own tools to a creator or agency account.
+
+You need a Fanvue creator or agency account and Node.js 18 or later for the npm install. Fan accounts can't use the CLI.
+
+## Install the CLI
+
+Install the `@fanvue/cli` package globally, then check the version.
+
+```bash
+npm install -g @fanvue/cli
+fanvue --version
+```
+
+```text
+1.0.0
+```
+
+The package installs a single compiled binary for macOS, Linux or Windows, so nothing else runs alongside it.
+
+Then [sign in](/cli/login) with `fanvue login`.
+
+## Run a command
+
+Commands follow the sections of your Fanvue account: `messages`, `fans`, `vault`, `posts`, `insights`, `links`, `promotions` and `account`, plus `agency`, `webhooks` and `apps`. Run a section name on its own to list its commands, and add `--help` to any command for its flags.
+
+```bash
+fanvue messages list --size 5
+fanvue messages send 7b1c2d3e-0000-4000-8000-000000000001 --text "Thanks for subscribing"
+fanvue insights earnings summary
+```
+
+Flags are the operation's query parameters and body fields under their API names, so `--mediaUuids` sets `mediaUuids`. Repeat a flag to send a list, and pass an object field as JSON. To send a whole body, use `--data` with JSON or a file, and individual flags override its fields.
+
+```bash
+fanvue posts create --text "New set is live" --audience subscribers --mediaUuids 2f6a... --mediaUuids 9c41...
+fanvue posts create --data @post.json --audience followers
+```
+
+Every command also works as a raw request through `fanvue api`, which accepts the same routes as the commands and nothing else.
+
+```bash
+fanvue api GET "/v1/chats?size=5"
+```
+
+The [command reference](/cli/commands) lists every command and the operation it sends.
+
+## Confirm changes before they send
+
+Reads send straight away. The CLI never stops to ask a question by default, so a script or an automated tool can't hang on a prompt. A command that changes data needs `--yes`. A command that changes something fans see or pay for, such as your subscription price, a promotion, a mass message or a checkout link, needs `--confirm <your handle>`. `--yes` alone is refused for these, so a script can't make the change by accident. Without the flag, the command sends nothing and exits with code `7`, naming the flag it needs.
+
+To be asked at the terminal instead, add `--interactive`. The CLI then asks before a change, and asks you to type your handle for a change fans see.
+
+Add `--dry-run` to any command to print the request it would send without sending it.
+
+```bash
+fanvue account subscription-price set --subscriptionPrice 999 --dry-run
+```
+
+```text
+PATCH https://api.fanvue.com/v1/users/me/subscription-price
+{
+  "subscriptionPrice": 999
+}
+```
+
+## Act for a creator as an agency
+
+Agency team members add `--creator <creatorUserUuid>` to act for a creator they manage. The CLI sends the operation's `/v1/creators/{creatorUserUuid}/...` route, which carries the same scopes and the creator's own rate-limit budget. The [command reference](/cli/commands) marks which commands accept `--creator`.
+
+```bash
+fanvue fans subscribers list --creator 7b1c2d3e-0000-4000-8000-000000000002
+```
+
+## Read the output
+
+At a terminal, lists print as a table and single objects as `key value` lines. Choose a format with `--format`, or use `--json` as a short form of `--format json`.
+
+| Format | Output |
+| --- | --- |
+| `table` | Readable columns. The default at a terminal. |
+| `json` | The API response, indented. The default when the output is piped or redirected. |
+| `jsonl` | One JSON object per line for each item in a list. |
+
+`--all` follows `nextCursor` and returns every page as one list. Access tokens never appear in the output. Signed media links are hidden unless you add `--show-url`, because anyone holding one can open the media until it expires.
+
+## Use the CLI in scripts
+
+Exit codes are stable, so a script can branch on them.
+
+| Exit code | Meaning |
+| --- | --- |
+| `0` | The command succeeded. |
+| `1` | Something unexpected failed, including an error the API returned. |
+| `2` | The command, an argument or a flag was wrong. Nothing was sent. |
+| `4` | The session is missing or has ended, or the account or token lacks the scope. |
+| `7` | The command needs your confirmation, or the confirmation didn't match. Nothing was sent. |
+
+Codes `3`, `5` and `6` are reserved for the app-building commands.
+
+When the output isn't a terminal, errors print to standard error as JSON. `code` is stable, so branch on it rather than on `message`. `pointer` is a JSON Pointer to the input that was wrong, and `hint` says how to fix it.
+
+```json
+{"error":{"code":"invalid_type","message":"--subscriptionPrice must be a whole number.","pointer":"/body/subscriptionPrice","value":"ten","hint":"Pass a whole number, for example 10."}}
+```
+
+The CLI retries a `429` for reads after the `Retry-After` interval, and never retries a write, so a change is never sent twice. Each request counts against your [rate limit](/authentication/rate-limits) like any other app's.
