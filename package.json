@@ -1,6 +1,6 @@
 {
   "name": "@fanvue/cli",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Fanvue from your terminal",
   "type": "module",
   "private": true,
