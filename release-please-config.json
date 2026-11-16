@@ -28,7 +28,8 @@
           "section": "Miscellaneous",
           "hidden": true
         }
-      ]
+      ],
+      "release-as": "1.0.2"
     }
   }
 }
